@@ -179,9 +179,10 @@ def _closure_js_library_impl(
     # which is a superset of the CSS libraries in its transitive closure.
     stylesheets = []
     for dep in deps:
-        if ClosureCssLibraryInfo in dep:
+        if type(dep) == "Target" and ClosureCssLibraryInfo in dep:
             stylesheets.append(dep.label)
-
+        elif hasattr(dep, "closure_css_library"):
+            stylesheets.append(dep.label)
     # JsChecker is a program that's run via the ClosureWorker persistent Bazel
     # worker. This program is a modded version of the Closure Compiler. It does
     # syntax checking and linting on the srcs files specified by this target, and
@@ -265,7 +266,10 @@ def _closure_js_library_impl(
     info_files = []
     for dep in deps:
         # Polymorphic rules, e.g. closure_css_library, might not provide this.
-        info = getattr(dep[ClosureJsLibraryInfo], "info", None)
+        if type(dep) == "Target":
+            info = getattr(dep[ClosureJsLibraryInfo], "info", None)
+        else:
+            info = getattr(dep, "info", None)
         if info:
             args.add("--dep", info)
             info_files.append(info)
