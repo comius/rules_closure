@@ -152,9 +152,9 @@ def unfurl(deps, provider = ""):
     """Returns deps as well as deps exported by parent rules."""
     res = []
     for dep in deps:
-        if not provider or provider in dep:
+        if not provider or type(dep) == "Target" and provider in dep or type(dep) == "struct":
             res.append(dep)
-        if ClosureExportsInfo in dep:
+        if type(dep) == "Target" and ClosureExportsInfo in dep:
             for edep in dep[ClosureExportsInfo].exports:
                 if not provider or provider in edep:
                     res.append(edep)
@@ -176,17 +176,30 @@ def collect_js(
     js_module_roots = []
     has_closure_library = False
     for dep in deps:
-        srcs += [getattr(dep[ClosureJsLibraryInfo], "srcs", depset())]
-        ijs_files += [getattr(dep[ClosureJsLibraryInfo], "ijs_files", depset())]
-        infos += [getattr(dep[ClosureJsLibraryInfo], "infos", depset())]
-        modules += [getattr(dep[ClosureJsLibraryInfo], "modules", depset())]
-        descriptors += [getattr(dep[ClosureJsLibraryInfo], "descriptors", depset())]
-        stylesheets += [getattr(dep[ClosureJsLibraryInfo], "stylesheets", depset())]
-        js_module_roots += [getattr(dep[ClosureJsLibraryInfo], "js_module_roots", depset())]
-        has_closure_library = (
-            has_closure_library or
-            getattr(dep[ClosureJsLibraryInfo], "has_closure_library", False)
-        )
+        if type(dep) == "Target":
+            srcs += [getattr(dep[ClosureJsLibraryInfo], "srcs", depset())]
+            ijs_files += [getattr(dep[ClosureJsLibraryInfo], "ijs_files", depset())]
+            infos += [getattr(dep[ClosureJsLibraryInfo], "infos", depset())]
+            modules += [getattr(dep[ClosureJsLibraryInfo], "modules", depset())]
+            descriptors += [getattr(dep[ClosureJsLibraryInfo], "descriptors", depset())]
+            stylesheets += [getattr(dep[ClosureJsLibraryInfo], "stylesheets", depset())]
+            js_module_roots += [getattr(dep[ClosureJsLibraryInfo], "js_module_roots", depset())]
+            has_closure_library = (
+                has_closure_library or
+                getattr(dep[ClosureJsLibraryInfo], "has_closure_library", False)
+            )
+        else:
+            srcs += [getattr(dep, "srcs", depset())]
+            ijs_files += [getattr(dep, "ijs_files", depset())]
+            infos += [getattr(dep, "infos", depset())]
+            modules += [getattr(dep, "modules", depset())]
+            descriptors += [getattr(dep, "descriptors", depset())]
+            stylesheets += [getattr(dep, "stylesheets", depset())]
+            js_module_roots += [getattr(dep, "js_module_roots", depset())]
+            has_closure_library = (
+                has_closure_library or
+                getattr(dep, "has_closure_library", False)
+            )
     if no_closure_library:
         if has_closure_library:
             fail("no_closure_library can't be used when Closure Library is " +
